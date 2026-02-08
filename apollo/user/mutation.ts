@@ -144,7 +144,6 @@ export const CREATE_PROPERTY = gql`
 			memberId
 			soldAt
 			deletedAt
-			constructedAt
 			createdAt
 			updatedAt
 		}
@@ -173,7 +172,6 @@ export const UPDATE_PROPERTY = gql`
 			memberId
 			soldAt
 			deletedAt
-			constructedAt
 			createdAt
 			updatedAt
 		}
@@ -202,7 +200,6 @@ export const LIKE_TARGET_PROPERTY = gql`
 			memberId
 			soldAt
 			deletedAt
-			constructedAt
 			createdAt
 			updatedAt
 		}
