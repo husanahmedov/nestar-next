@@ -20,6 +20,9 @@ const PopularPropertyCard = (props: PopularPropertyCardProps) => {
 	const user = useReactiveVar(userVar);
 
 	/** HANDLERS **/
+	const pushRouter = async (propertyId: string) => {
+		await router.push(`/property/detail?id=${propertyId}`);
+	};
 
 	if (device === 'mobile') {
 		return (
@@ -27,7 +30,8 @@ const PopularPropertyCard = (props: PopularPropertyCardProps) => {
 				<Box
 					component={'div'}
 					className={'card-img'}
-					style={{ backgroundImage: `url(${REACT_APP_API_URL}/${property?.propertyImages[0]})` }}
+					style={{ backgroundImage: `url(${REACT_APP_API_URL}/${property?.propertyImages[0]})`, cursor: 'pointer' }}
+					onClick={() => pushRouter(property?._id)}
 				>
 					{property?.propertyRank && property?.propertyRank >= 50 ? (
 						<div className={'status'}>
@@ -41,7 +45,7 @@ const PopularPropertyCard = (props: PopularPropertyCardProps) => {
 					<div className={'price'}>${property.propertyPrice}</div>
 				</Box>
 				<Box component={'div'} className={'info'}>
-					<strong className={'title'}>{property.propertyTitle}</strong>
+					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>{property.propertyTitle}</strong>
 					<p className={'desc'}>{property.propertyAddress}</p>
 					<div className={'options'}>
 						<div>
@@ -76,7 +80,8 @@ const PopularPropertyCard = (props: PopularPropertyCardProps) => {
 				<Box
 					component={'div'}
 					className={'card-img'}
-					style={{ backgroundImage: `url(${REACT_APP_API_URL}/${property?.propertyImages[0]})` }}
+					style={{ backgroundImage: `url(${REACT_APP_API_URL}/${property?.propertyImages[0]})`, cursor: 'pointer' }}
+					onClick={() => pushRouter(property?._id)}
 				>
 					{property?.propertyRank && property?.propertyRank >= 50 ? (
 						<div className={'status'}>
@@ -90,7 +95,7 @@ const PopularPropertyCard = (props: PopularPropertyCardProps) => {
 					<div className={'price'}>${property.propertyPrice}</div>
 				</Box>
 				<Box component={'div'} className={'info'}>
-					<strong className={'title'}>{property.propertyTitle}</strong>
+					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>{property.propertyTitle}</strong>
 					<p className={'desc'}>{property.propertyAddress}</p>
 					<div className={'options'}>
 						<div>

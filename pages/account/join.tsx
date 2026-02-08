@@ -82,7 +82,7 @@ const Join: NextPage = () => {
 							</Box>
 							<Box className={'input-wrap'}>
 								<div className={'input-box'}>
-									<span>Nickname</span>
+									<span>Nickname (Martin)</span>
 									<input
 										type="text"
 										placeholder={'Enter Nickname'}
@@ -95,7 +95,7 @@ const Join: NextPage = () => {
 									/>
 								</div>
 								<div className={'input-box'}>
-									<span>Password</span>
+									<span>Password (salom1234)</span>
 									<input
 										type="text"
 										placeholder={'Enter Password'}

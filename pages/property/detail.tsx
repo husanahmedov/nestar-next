@@ -33,8 +33,9 @@ import 'swiper/css/pagination';
 import { GET_PROPERTIES, GET_PROPERTY } from '../../apollo/user/query';
 import { T } from '../../libs/types/common';
 import { Direction, Message } from '../../libs/enums/common.enum';
-import { LIKE_TARGET_PROPERTY } from '../../apollo/user/mutation';
+import { LIKE_TARGET_PROPERTY, CREATE_COMMENT } from '../../apollo/user/mutation';
 import { sweetMixinErrorAlert, sweetTopSmallSuccessAlert } from '../../libs/sweetAlert';
+import { GET_COMMENTS } from '../../apollo/admin/query';
 
 SwiperCore.use([Autoplay, Navigation, Pagination]);
 
@@ -63,6 +64,7 @@ const PropertyDetail: NextPage = ({ initialComment, ...props }: any) => {
 
 	/** APOLLO REQUESTS **/
 	const [likeTargetProperty] = useMutation(LIKE_TARGET_PROPERTY);
+	const [createComment] = useMutation(CREATE_COMMENT);
 
 	const {
 		loading: getPropertyLoading,
@@ -107,6 +109,23 @@ const PropertyDetail: NextPage = ({ initialComment, ...props }: any) => {
 		skip: !propertyId && !property,
 		onCompleted: (data: T) => {
 			if (data?.getProperties?.list) setDestinationProperty(data?.getProperties?.list);
+		},
+	});
+	const {
+		loading: getCommentsLoading,
+		error: getCommentsError,
+		data: getCommentsData,
+		refetch: getCommentsRefetch,
+	} = useQuery(GET_COMMENTS, {
+		fetchPolicy: 'cache-and-network',
+		variables: {
+			input: initialComment,
+		},
+		skip: !commentInquiry.search.commentRefId,
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data: T) => {
+			if (data?.getComments?.list) setPropertyComments(data?.getComments?.list);
+			setCommentTotal(data?.getComments?.metaCounter[0]?.total || 0);
 		},
 	});
 	/** LIFECYCLES **/
@@ -158,6 +177,28 @@ const PropertyDetail: NextPage = ({ initialComment, ...props }: any) => {
 	};
 	const changeImageHandler = (image: string) => {
 		setSlideImage(image);
+	};
+
+	const createCommentHandler = async () => {
+		try {
+			if (!user._id) throw new Error(Message.NOT_AUTHENTICATED);
+			if (insertCommentData.commentContent === '') return;
+
+			await createComment({
+				variables: {
+					input: insertCommentData,
+				},
+			});
+
+			setInsertCommentData({ ...insertCommentData, commentContent: '' });
+			await getCommentsRefetch({ input: commentInquiry });
+			await getPropertyRefetch({ input: propertyId });
+
+			await sweetTopSmallSuccessAlert('Comment created successfully!', 800);
+		} catch (err: any) {
+			console.log('ERROR, createCommentHandler:', err.message);
+			sweetMixinErrorAlert(err.message).then();
+		}
 	};
 
 	const commentPaginationChangeHandler = async (event: ChangeEvent<unknown>, value: number) => {
@@ -477,6 +518,7 @@ const PropertyDetail: NextPage = ({ initialComment, ...props }: any) => {
 										<Button
 											className={'submit-review'}
 											disabled={insertCommentData.commentContent === '' || user?._id === ''}
+											onClick={createCommentHandler}
 										>
 											<Typography className={'title'}>Submit Review</Typography>
 											<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 17 17" fill="none">
