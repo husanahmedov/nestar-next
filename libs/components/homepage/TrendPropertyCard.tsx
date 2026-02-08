@@ -28,7 +28,7 @@ const TrendPropertyCard = (props: TrendPropertyCardProps) => {
 				<Box
 					component={'div'}
 					className={'card-img'}
-					style={{ backgroundImage: `url(${REACT_APP_API_URL}${property?.propertyImages[0]})` }}
+					style={{ backgroundImage: `url(${REACT_APP_API_URL}/${property?.propertyImages[0]})` }}
 				>
 					<div>${property.propertyPrice}</div>
 				</Box>
@@ -79,7 +79,7 @@ const TrendPropertyCard = (props: TrendPropertyCardProps) => {
 				<Box
 					component={'div'}
 					className={'card-img'}
-					style={{ backgroundImage: `url(${REACT_APP_API_URL}${property?.propertyImages[0]})` }}
+					style={{ backgroundImage: `url(${REACT_APP_API_URL}/${property?.propertyImages[0]})` }}
 				>
 					<div>${property.propertyPrice}</div>
 				</Box>
