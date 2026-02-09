@@ -38,7 +38,9 @@ const TopPropertyCard = (props: TopPropertyCardProps) => {
 					<div>${property?.propertyPrice}</div>
 				</Box>
 				<Box component={'div'} className={'info'}>
-					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>{property?.propertyTitle}</strong>
+					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>
+						{property?.propertyTitle}
+					</strong>
 					<p className={'desc'}>{property?.propertyAddress}</p>
 					<div className={'options'}>
 						<div>
@@ -91,7 +93,9 @@ const TopPropertyCard = (props: TopPropertyCardProps) => {
 					<div>${property?.propertyPrice}</div>
 				</Box>
 				<Box component={'div'} className={'info'}>
-					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>{property?.propertyTitle}</strong>
+					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>
+						{property?.propertyTitle}
+					</strong>
 					<p className={'desc'}>{property?.propertyAddress}</p>
 					<div className={'options'}>
 						<div>

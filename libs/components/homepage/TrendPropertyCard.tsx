@@ -38,7 +38,9 @@ const TrendPropertyCard = (props: TrendPropertyCardProps) => {
 					<div>${property.propertyPrice}</div>
 				</Box>
 				<Box component={'div'} className={'info'}>
-					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>{property.propertyTitle}</strong>
+					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>
+						{property.propertyTitle}
+					</strong>
 					<p className={'desc'}>{property.propertyDesc ?? 'no description'}</p>
 					<div className={'options'}>
 						<div>
@@ -90,7 +92,9 @@ const TrendPropertyCard = (props: TrendPropertyCardProps) => {
 					<div>${property.propertyPrice}</div>
 				</Box>
 				<Box component={'div'} className={'info'}>
-					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>{property.propertyTitle}</strong>
+					<strong className={'title'} style={{ cursor: 'pointer' }} onClick={() => pushRouter(property?._id)}>
+						{property.propertyTitle}
+					</strong>
 					<p className={'desc'}>{property.propertyDesc ?? 'no description'}</p>
 					<div className={'options'}>
 						<div>
