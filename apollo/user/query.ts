@@ -60,8 +60,6 @@ query GetMember($input: String!) {
         memberPoints
         memberLikes
         memberViews
-        memberFollowings
-				memberFollowers
         memberRank
         memberWarnings
         memberBlocks
@@ -69,11 +67,6 @@ query GetMember($input: String!) {
         createdAt
         updatedAt
         accessToken
-        meFollowed {
-					followingId
-					followerId
-					myFollowing
-				}
     }
 }
 `);

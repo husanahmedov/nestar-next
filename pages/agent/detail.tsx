@@ -6,11 +6,11 @@ import PropertyBigCard from '../../libs/components/common/PropertyBigCard';
 import ReviewCard from '../../libs/components/agent/ReviewCard';
 import { Box, Button, Pagination, Stack, Typography } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
-import { useReactiveVar } from '@apollo/client';
+import { useMutation, useQuery, useReactiveVar } from '@apollo/client';
 import { useRouter } from 'next/router';
 import { Property } from '../../libs/types/property/property';
 import { Member } from '../../libs/types/member/member';
-import { sweetErrorHandling } from '../../libs/sweetAlert';
+import { sweetErrorHandling, sweetMixinErrorAlert, sweetTopSmallSuccessAlert } from '../../libs/sweetAlert';
 import { userVar } from '../../apollo/store';
 import { PropertiesInquiry } from '../../libs/types/property/property.input';
 import { CommentInput, CommentsInquiry } from '../../libs/types/comment/comment.input';
@@ -18,6 +18,10 @@ import { Comment } from '../../libs/types/comment/comment';
 import { CommentGroup } from '../../libs/enums/comment.enum';
 import { REACT_APP_API_URL } from '../../libs/config';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { CREATE_COMMENT, LIKE_TARGET_PROPERTY } from '../../apollo/user/mutation';
+import { GET_COMMENTS, GET_MEMBER, GET_PROPERTIES } from '../../apollo/user/query';
+import { T } from '../../libs/types/common';
+import { Message } from '../../libs/enums/common.enum';
 
 export const getStaticProps = async ({ locale }: any) => ({
 	props: {
@@ -29,12 +33,18 @@ const AgentDetail: NextPage = ({ initialInput, initialComment, ...props }: any) 
 	const device = useDeviceDetect();
 	const router = useRouter();
 	const user = useReactiveVar(userVar);
-	const [mbId, setMbId] = useState<string | null>(null);
+	const [agentId, setAgentId] = useState<string | null>(null);
 	const [agent, setAgent] = useState<Member | null>(null);
-	const [searchFilter, setSearchFilter] = useState<PropertiesInquiry>(initialInput);
+	const [searchFilter, setSearchFilter] = useState<PropertiesInquiry>({
+		...initialInput,
+		search: { ...initialInput.search, memberId: null },
+	});
 	const [agentProperties, setAgentProperties] = useState<Property[]>([]);
 	const [propertyTotal, setPropertyTotal] = useState<number>(0);
-	const [commentInquiry, setCommentInquiry] = useState<CommentsInquiry>(initialComment);
+	const [commentInquiry, setCommentInquiry] = useState<CommentsInquiry>({
+		...initialComment,
+		search: { ...initialComment.search, commentRefId: null },
+	});
 	const [agentComments, setAgentComments] = useState<Comment[]>([]);
 	const [commentTotal, setCommentTotal] = useState<number>(0);
 	const [insertCommentData, setInsertCommentData] = useState<CommentInput>({
@@ -44,13 +54,93 @@ const AgentDetail: NextPage = ({ initialInput, initialComment, ...props }: any) 
 	});
 
 	/** APOLLO REQUESTS **/
+	/** APOLLO REQUESTS **/
+	const [createComment] = useMutation(CREATE_COMMENT);
+	const [likeTargetProperty] = useMutation(LIKE_TARGET_PROPERTY);
+
+	const {
+		loading: getMemberLoading,
+		data: getMemberData,
+		error: getMemberError,
+		refetch: getMemberRefetch,
+	} = useQuery(GET_MEMBER, {
+		fetchPolicy: 'network-only',
+		variables: { input: agentId },
+		skip: !agentId,
+		onCompleted: (data: any) => {
+			setAgent(data?.getMember);
+			setSearchFilter({
+				...searchFilter,
+				search: {
+					memberId: data?.getMember?._id,
+				},
+			});
+			setCommentInquiry({
+				...commentInquiry,
+				search: {
+					commentRefId: data?.getMember?._id,
+				},
+			});
+			setInsertCommentData({
+				...insertCommentData,
+				commentRefId: data?.getMember?._id,
+			});
+		},
+	});
+
+	const {
+		loading: getPropertiesLoading,
+		error: getPropertiesError,
+		data: getPropertiesData,
+		refetch: getPropertiesRefetch,
+	} = useQuery(GET_PROPERTIES, {
+		fetchPolicy: 'network-only',
+		variables: {
+			input: searchFilter,
+		},
+		skip: !searchFilter.search.memberId,
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data: T) => {
+			setAgentProperties(data?.getProperties?.list);
+			setPropertyTotal(data?.getProperties?.metaCounter[0]?.total || 0);
+		},
+	}); // fazalarni olib beradi
+
+	const {
+		loading: getCommentsLoading,
+		error: getCommentsError,
+		data: getCommentsData,
+		refetch: getCommentsRefetch,
+	} = useQuery(GET_COMMENTS, {
+		fetchPolicy: 'cache-and-network',
+		variables: {
+			input: commentInquiry,
+		},
+		skip: !commentInquiry.search.commentRefId,
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data: T) => {
+			if (data?.getComments?.list) setAgentComments(data?.getComments?.list);
+			setCommentTotal(data?.getComments?.metaCounter[0]?.total || 0);
+		},
+	});
+
+	// ...
+	//
 	/** LIFECYCLES **/
 	useEffect(() => {
-		if (router.query.agentId) setMbId(router.query.agentId as string);
+		if (router.query.agentId) setAgentId(router.query.agentId as string);
 	}, [router]);
 
-	useEffect(() => {}, [searchFilter]);
-	useEffect(() => {}, [commentInquiry]);
+	useEffect(() => {
+		if (searchFilter.search.memberId) {
+			getPropertiesRefetch({ variables: { input: searchFilter } }).then(() => {});
+		}
+	}, [searchFilter]);
+	useEffect(() => {
+		if (commentInquiry.search.commentRefId) {
+			getCommentsRefetch({ variables: { input: commentInquiry } }).then(() => {});
+		}
+	}, [commentInquiry]);
 
 	/** HANDLERS **/
 	const redirectToMemberPageHandler = async (memberId: string) => {
@@ -74,8 +164,39 @@ const AgentDetail: NextPage = ({ initialInput, initialComment, ...props }: any) 
 
 	const createCommentHandler = async () => {
 		try {
+			if (!user._id) throw new Error(Message.NOT_AUTHENTICATED);
+			if (user._id === agent?._id) throw new Error("You can't review yourself!");
+			if (insertCommentData.commentContent === '') return;
+
+			await createComment({
+				variables: {
+					input: insertCommentData,
+				},
+			});
+
+			setInsertCommentData({ ...insertCommentData, commentContent: '' });
+			await getCommentsRefetch({ variables: { input: commentInquiry } });
+			await sweetTopSmallSuccessAlert('Comment created successfully!', 800);
 		} catch (err: any) {
-			sweetErrorHandling(err).then();
+			console.log('ERROR, createCommentHandler:', err.message);
+			sweetMixinErrorAlert(err.message).then();
+		}
+	};
+
+	const likePropertyHandler = async (user: any, id: string) => {
+		try {
+			if (!id) return;
+			if (!user._id) throw new Error(Message.NOT_AUTHENTICATED);
+
+			await likeTargetProperty({
+				variables: { input: id },
+			});
+			await getPropertiesRefetch({ variables: { input: id } });
+
+			await sweetTopSmallSuccessAlert('success', 800);
+		} catch (err: any) {
+			console.log('ERROR, likePropertyHandler:', err.message);
+			sweetMixinErrorAlert(err.message).then();
 		}
 	};
 
@@ -103,7 +224,7 @@ const AgentDetail: NextPage = ({ initialInput, initialComment, ...props }: any) 
 							{agentProperties.map((property: Property) => {
 								return (
 									<div className={'wrap-main'} key={property?._id}>
-										<PropertyBigCard property={property} key={property?._id} />
+										<PropertyBigCard property={property} key={property?._id} likePropertyHandler={likePropertyHandler} />
 									</div>
 								);
 							})}
@@ -204,7 +325,7 @@ AgentDetail.defaultProps = {
 		page: 1,
 		limit: 9,
 		search: {
-			memberId: '',
+			memberId: null,
 		},
 	},
 	initialComment: {
@@ -213,7 +334,7 @@ AgentDetail.defaultProps = {
 		sort: 'createdAt',
 		direction: 'ASC',
 		search: {
-			commentRefId: '',
+			commentRefId: null,
 		},
 	},
 };
