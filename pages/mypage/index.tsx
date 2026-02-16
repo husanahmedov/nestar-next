@@ -18,7 +18,7 @@ import MemberFollowers from '../../libs/components/member/MemberFollowers';
 import { sweetErrorHandling, sweetMixinSuccessAlert } from '../../libs/sweetAlert';
 import MemberFollowings from '../../libs/components/member/MemberFollowings';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { SUBSCRIBE, UNSUBSCRIBE } from '../../apollo/user/mutation';
+import { LIKE_TARGET_MEMBER, SUBSCRIBE, UNSUBSCRIBE } from '../../apollo/user/mutation';
 
 export const getStaticProps = async ({ locale }: any) => ({
 	props: {
@@ -35,6 +35,7 @@ const MyPage: NextPage = () => {
 	/** APOLLO REQUESTS **/
 	const [subscribe] = useMutation(SUBSCRIBE);
 	const [unsubscribe] = useMutation(UNSUBSCRIBE);
+	const [likeTargetMember] = useMutation(LIKE_TARGET_MEMBER);
 
 	/** LIFECYCLES **/
 	useEffect(() => {
@@ -44,29 +45,41 @@ const MyPage: NextPage = () => {
 	/** HANDLERS **/
 	const subscribeHandler = async (id: string, refetch: any, query: any) => {
 		try {
+			if (!user._id) throw new Error('You must be logged in to follow.');
+
 			await subscribe({
 				variables: {
 					input: id,
 				},
 			});
-			await sweetMixinSuccessAlert('Subscribed successfully!');
-			await refetch({ input: query });
+
+			if (refetch && typeof refetch === 'function') {
+				await refetch({ input: query });
+			}
+
+			await sweetMixinSuccessAlert('Followed successfully!');
 		} catch (err: any) {
-			sweetErrorHandling(err).then();
+			await sweetErrorHandling(err);
 		}
 	};
 
 	const unsubscribeHandler = async (id: string, refetch: any, query: any) => {
 		try {
+			if (!user._id) throw new Error('You must be logged in to unfollow.');
+
 			await unsubscribe({
 				variables: {
 					input: id,
 				},
 			});
-			await sweetMixinSuccessAlert('Unsubscribed successfully!');
-			await refetch({ input: query });
+
+			if (refetch && typeof refetch === 'function') {
+				await refetch({ input: query });
+			}
+
+			await sweetMixinSuccessAlert('Unfollowed successfully!');
 		} catch (err: any) {
-			sweetErrorHandling(err).then();
+			await sweetErrorHandling(err);
 		}
 	};
 
@@ -76,6 +89,26 @@ const MyPage: NextPage = () => {
 			else await router.push(`/member?memberId=${memberId}`);
 		} catch (error) {
 			await sweetErrorHandling(error);
+		}
+	};
+
+	const likeMemberHandler = async (id: string, refetch: any, query: any) => {
+		try {
+			if (!user._id) throw new Error('You must be logged in to like.');
+
+			await likeTargetMember({
+				variables: {
+					input: id,
+				},
+			});
+
+			if (refetch && typeof refetch === 'function') {
+				await refetch({ input: query });
+			}
+
+			await sweetMixinSuccessAlert('Success!');
+		} catch (err: any) {
+			await sweetErrorHandling(err);
 		}
 	};
 
@@ -104,6 +137,7 @@ const MyPage: NextPage = () => {
 											subscribeHandler={subscribeHandler}
 											unsubscribeHandler={unsubscribeHandler}
 											redirectToMemberPageHandler={redirectToMemberPageHandler}
+											likeMemberHandler={likeMemberHandler}
 										/>
 									)}
 									{category === 'followings' && (
@@ -111,6 +145,7 @@ const MyPage: NextPage = () => {
 											subscribeHandler={subscribeHandler}
 											unsubscribeHandler={unsubscribeHandler}
 											redirectToMemberPageHandler={redirectToMemberPageHandler}
+											likeMemberHandler={likeMemberHandler}
 										/>
 									)}
 								</Stack>

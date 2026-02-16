@@ -65,26 +65,33 @@ const AgentDetail: NextPage = ({ initialInput, initialComment, ...props }: any) 
 		refetch: getMemberRefetch,
 	} = useQuery(GET_MEMBER, {
 		fetchPolicy: 'network-only',
+		errorPolicy: 'all',
 		variables: { input: agentId },
 		skip: !agentId,
 		onCompleted: (data: any) => {
-			setAgent(data?.getMember);
-			setSearchFilter({
-				...searchFilter,
-				search: {
-					memberId: data?.getMember?._id,
-				},
-			});
-			setCommentInquiry({
-				...commentInquiry,
-				search: {
-					commentRefId: data?.getMember?._id,
-				},
-			});
-			setInsertCommentData({
-				...insertCommentData,
-				commentRefId: data?.getMember?._id,
-			});
+			if (data?.getMember) {
+				const memberData = {
+					...data.getMember,
+					memberFollowings: data.getMember.memberFollowings || 0,
+				};
+				setAgent(memberData);
+				setSearchFilter({
+					...searchFilter,
+					search: {
+						memberId: memberData?._id,
+					},
+				});
+				setCommentInquiry({
+					...commentInquiry,
+					search: {
+						commentRefId: memberData?._id,
+					},
+				});
+				setInsertCommentData({
+					...insertCommentData,
+					commentRefId: memberData?._id,
+				});
+			}
 		},
 	});
 
@@ -224,7 +231,11 @@ const AgentDetail: NextPage = ({ initialInput, initialComment, ...props }: any) 
 							{agentProperties.map((property: Property) => {
 								return (
 									<div className={'wrap-main'} key={property?._id}>
-										<PropertyBigCard property={property} key={property?._id} likePropertyHandler={likePropertyHandler} />
+										<PropertyBigCard
+											property={property}
+											key={property?._id}
+											likePropertyHandler={likePropertyHandler}
+										/>
 									</div>
 								);
 							})}

@@ -26,6 +26,7 @@ const MyProfile: NextPage = ({ initialValues, ...props }: any) => {
 	useEffect(() => {
 		setUpdateData({
 			...updateData,
+			_id: user._id,
 			memberNick: user.memberNick,
 			memberPhone: user.memberPhone,
 			memberAddress: user.memberAddress,

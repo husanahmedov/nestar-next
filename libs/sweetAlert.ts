@@ -3,10 +3,23 @@ import 'animate.css';
 import { Messages } from './config';
 
 export const sweetErrorHandling = async (err: any) => {
+	let errorMessage = Messages.error1;
+
+	if (typeof err === 'string') {
+		errorMessage = err;
+	} else if (err?.message) {
+		errorMessage = err.message;
+	} else if (err?.graphQLErrors && err.graphQLErrors.length > 0) {
+		errorMessage = err.graphQLErrors[0].message;
+	} else if (err?.networkError?.result?.errors && err.networkError.result.errors.length > 0) {
+		errorMessage = err.networkError.result.errors[0].message;
+	}
+
 	await Swal.fire({
 		icon: 'error',
-		text: err.message,
+		text: errorMessage,
 		showConfirmButton: false,
+		timer: 3000,
 	});
 };
 
