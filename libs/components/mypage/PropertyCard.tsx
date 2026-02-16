@@ -34,12 +34,13 @@ export const PropertyCard = (props: PropertyCardProps) => {
 	};
 
 	const pushPropertyDetail = async (id: string) => {
-		if (memberPage)
+		if (!memberPage)
 			await router.push({
 				pathname: '/property/detail',
 				query: { id: id },
 			});
-		else return;
+			
+			else return;
 	};
 
 	const handleClick = (event: any) => {
@@ -55,7 +56,7 @@ export const PropertyCard = (props: PropertyCardProps) => {
 	} else
 		return (
 			<Stack className="property-card-box">
-				<Stack className="image-box" onClick={() => pushPropertyDetail(property?._id)}>
+				<Stack className="image-box" style={{cursor: "pointer"}} onClick={() => pushPropertyDetail(property?._id)}>
 					<img src={`${process.env.REACT_APP_API_URL}/${property.propertyImages[0]}`} alt="" />
 				</Stack>
 				<Stack className="information-box" onClick={() => pushPropertyDetail(property?._id)}>
@@ -99,17 +100,15 @@ export const PropertyCard = (props: PropertyCardProps) => {
 						}}
 					>
 						{property.propertyStatus === 'ACTIVE' && (
-							<>
-								<MenuItem
-									disableRipple
-									onClick={() => {
-										handleClose();
-										updatePropertyHandler(PropertyStatus.SOLD, property?._id);
-									}}
-								>
-									Sold
-								</MenuItem>
-							</>
+							<MenuItem
+								disableRipple
+								onClick={() => {
+									handleClose();
+									updatePropertyHandler(PropertyStatus.SOLD, property?._id);
+								}}
+							>
+								Sold
+							</MenuItem>
 						)}
 					</Menu>
 				)}
@@ -117,7 +116,7 @@ export const PropertyCard = (props: PropertyCardProps) => {
 				<Stack className="views-box">
 					<Typography className="views">{property.propertyViews.toLocaleString()}</Typography>
 				</Stack>
-				{!memberPage && (
+				{!memberPage && property.propertyStatus === PropertyStatus.ACTIVE && (
 					<Stack className="action-box">
 						<IconButton className="icon-button" onClick={() => pushEditProperty(property._id)}>
 							<ModeIcon className="buttons" />

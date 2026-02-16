@@ -8,6 +8,9 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import { T } from '../../types/common';
 import '@toast-ui/editor/dist/toastui-editor.css';
+import { useMutation } from '@apollo/client';
+import { CREATE_BOARD_ARTICLE } from '../../../apollo/user/mutation';
+import { sweetErrorHandling, sweetMixinSuccessAlert } from '../../sweetAlert';
 
 const TuiEditor = () => {
 	const editorRef = useRef<Editor>(null),
@@ -16,6 +19,7 @@ const TuiEditor = () => {
 	const [articleCategory, setArticleCategory] = useState<BoardArticleCategory>(BoardArticleCategory.FREE);
 
 	/** APOLLO REQUESTS **/
+	const [createBoardArticle] = useMutation(CREATE_BOARD_ARTICLE);
 
 	const memoizedValues = useMemo(() => {
 		const articleTitle = '',
@@ -76,7 +80,33 @@ const TuiEditor = () => {
 		memoizedValues.articleTitle = e.target.value;
 	};
 
-	const handleRegisterButton = async () => {};
+	const handleRegisterButton = async () => {
+		try {
+			const editor = editorRef.current;
+			const articleContent = editor?.getInstance().getHTML() as string;
+			memoizedValues.articleContent = articleContent;
+
+			if (memoizedValues.articleContent === '' || memoizedValues.articleTitle === '') {
+				throw new Error('Please fill all inputs!');
+			}
+
+			await createBoardArticle({
+				variables: {
+					input: {
+						articleCategory: articleCategory,
+						articleTitle: memoizedValues.articleTitle,
+						articleContent: memoizedValues.articleContent,
+						articleImage: memoizedValues.articleImage,
+					},
+				},
+			});
+
+			await sweetMixinSuccessAlert('Article created successfully!');
+			await router.push('/mypage?category=myArticles');
+		} catch (err: any) {
+			await sweetErrorHandling(err);
+		}
+	};
 
 	const doDisabledCheck = () => {
 		if (memoizedValues.articleContent === '' || memoizedValues.articleTitle === '') {

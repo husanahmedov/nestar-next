@@ -2,45 +2,60 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button, Stack, Typography } from '@mui/material';
 import useDeviceDetect from '../../hooks/useDeviceDetect';
-import { PropertyLocation, PropertyType } from '../../enums/property.enum';
+import { PropertyLocation, PropertyType, PropertyStatus } from '../../enums/property.enum';
 import { REACT_APP_API_URL, propertySquare } from '../../config';
 import { PropertyInput } from '../../types/property/property.input';
 import axios from 'axios';
 import { getJwtToken } from '../../auth';
-import { sweetMixinErrorAlert } from '../../sweetAlert';
-import { useReactiveVar } from '@apollo/client';
+import { sweetMixinErrorAlert, sweetMixinSuccessAlert, sweetErrorHandling } from '../../sweetAlert';
+import { useMutation, useQuery, useReactiveVar } from '@apollo/client';
 import { userVar } from '../../../apollo/store';
+import { CREATE_PROPERTY, UPDATE_PROPERTY } from '../../../apollo/user/mutation';
+import { GET_PROPERTY } from '../../../apollo/user/query';
+import { T } from '../../types/common';
 
 const AddProperty = ({ initialValues, ...props }: any) => {
 	const device = useDeviceDetect();
 	const router = useRouter();
 	const inputRef = useRef<any>(null);
 	const [insertPropertyData, setInsertPropertyData] = useState<PropertyInput>(initialValues);
+	const [propertyStatus, setPropertyStatus] = useState<PropertyStatus>(PropertyStatus.ACTIVE);
 	const [propertyType, setPropertyType] = useState<PropertyType[]>(Object.values(PropertyType));
 	const [propertyLocation, setPropertyLocation] = useState<PropertyLocation[]>(Object.values(PropertyLocation));
 	const token = getJwtToken();
 	const user = useReactiveVar(userVar);
+	const propertyId = router.query.propertyId as string;
 
 	/** APOLLO REQUESTS **/
-	let getPropertyData: any, getPropertyLoading: any;
+	const { loading: getPropertyLoading, data: getPropertyData } = useQuery(GET_PROPERTY, {
+		fetchPolicy: 'network-only',
+		variables: { input: propertyId },
+		skip: !propertyId,
+	});
+
+	const [createProperty] = useMutation(CREATE_PROPERTY);
+	const [updateProperty] = useMutation(UPDATE_PROPERTY);
 
 	/** LIFECYCLES **/
 	useEffect(() => {
-		setInsertPropertyData({
-			...insertPropertyData,
-			propertyTitle: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyTitle : '',
-			propertyPrice: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyPrice : 0,
-			propertyType: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyType : '',
-			propertyLocation: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyLocation : '',
-			propertyAddress: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyAddress : '',
-			propertyBarter: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyBarter : false,
-			propertyRent: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyRent : false,
-			propertyRooms: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyRooms : 0,
-			propertyBeds: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyBeds : 0,
-			propertySquare: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertySquare : 0,
-			propertyDesc: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyDesc : '',
-			propertyImages: getPropertyData?.getProperty ? getPropertyData?.getProperty?.propertyImages : [],
-		});
+		if (getPropertyData?.getProperty && !getPropertyLoading) {
+			const property = getPropertyData.getProperty;
+			setInsertPropertyData({
+				propertyTitle: property.propertyTitle,
+				propertyPrice: property.propertyPrice,
+				propertyType: property.propertyType,
+				propertyLocation: property.propertyLocation,
+				propertyAddress: property.propertyAddress,
+				propertyBarter: property.propertyBarter,
+				propertyRent: property.propertyRent,
+				propertyRooms: property.propertyRooms,
+				propertyBeds: property.propertyBeds,
+				propertySquare: property.propertySquare,
+				propertyDesc: property.propertyDesc,
+				propertyImages: property.propertyImages,
+			});
+			setPropertyStatus(property.propertyStatus);
+		}
 	}, [getPropertyLoading, getPropertyData]);
 
 	/** HANDLERS **/
@@ -115,9 +130,37 @@ const AddProperty = ({ initialValues, ...props }: any) => {
 		}
 	};
 
-	const insertPropertyHandler = useCallback(async () => {}, [insertPropertyData]);
+	const insertPropertyHandler = useCallback(async () => {
+		try {
+			await createProperty({
+				variables: {
+					input: insertPropertyData,
+				},
+			});
+			await sweetMixinSuccessAlert('Property created successfully!');
+			await router.push('/mypage?category=myProperties');
+		} catch (err: any) {
+			await sweetErrorHandling(err);
+		}
+	}, [insertPropertyData]);
 
-	const updatePropertyHandler = useCallback(async () => {}, [insertPropertyData]);
+	const updatePropertyHandler = useCallback(async () => {
+		try {
+			await updateProperty({
+				variables: {
+					input: {
+						_id: propertyId,
+						propertyStatus: propertyStatus,
+						...insertPropertyData,
+					},
+				},
+			});
+			await sweetMixinSuccessAlert('Property updated successfully!');
+			await router.push('/mypage?category=myProperties');
+		} catch (err: any) {
+			await sweetErrorHandling(err);
+		}
+	}, [insertPropertyData, propertyId, propertyStatus]);
 
 	if (user?.memberType !== 'AGENT') {
 		router.back();
@@ -131,7 +174,7 @@ const AddProperty = ({ initialValues, ...props }: any) => {
 		return (
 			<div id="add-property-page">
 				<Stack className="main-title-box">
-					<Typography className="main-title">Add New Property</Typography>
+					<Typography className="main-title">{propertyId ? 'Edit Property' : 'Add New Property'}</Typography>
 					<Typography className="sub-title">We are glad to see you again!</Typography>
 				</Stack>
 
@@ -271,6 +314,25 @@ const AddProperty = ({ initialValues, ...props }: any) => {
 									<img src={'/img/icons/Vector.svg'} className={'arrow-down'} />
 								</Stack>
 							</Stack>
+
+							{propertyId && (
+								<Stack className="config-row">
+									<Stack className="price-year-after-price">
+										<Typography className="title">Property Status</Typography>
+										<select
+											className={'select-description'}
+											value={propertyStatus}
+											onChange={({ target: { value } }) => setPropertyStatus(value as PropertyStatus)}
+										>
+											<option value={PropertyStatus.ACTIVE}>Active</option>
+											<option value={PropertyStatus.SOLD}>Sold</option>
+										</select>
+										<div className={'divider'}></div>
+										<img src={'/img/icons/Vector.svg'} className={'arrow-down'} />
+									</Stack>
+									<Stack className="price-year-after-price">{/* Empty space for layout consistency */}</Stack>
+								</Stack>
+							)}
 
 							<Stack className="config-row">
 								<Stack className="price-year-after-price">

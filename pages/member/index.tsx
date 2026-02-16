@@ -8,11 +8,12 @@ import MemberProperties from '../../libs/components/member/MemberProperties';
 import { useRouter } from 'next/router';
 import MemberFollowers from '../../libs/components/member/MemberFollowers';
 import MemberArticles from '../../libs/components/member/MemberArticles';
-import { useReactiveVar } from '@apollo/client';
-import { sweetErrorHandling } from '../../libs/sweetAlert';
+import { useMutation, useReactiveVar } from '@apollo/client';
+import { sweetErrorHandling, sweetMixinSuccessAlert } from '../../libs/sweetAlert';
 import MemberFollowings from '../../libs/components/member/MemberFollowings';
 import { userVar } from '../../apollo/store';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { SUBSCRIBE, UNSUBSCRIBE } from '../../apollo/user/mutation';
 
 export const getStaticProps = async ({ locale }: any) => ({
 	props: {
@@ -27,6 +28,8 @@ const MemberPage: NextPage = () => {
 	const user = useReactiveVar(userVar);
 
 	/** APOLLO REQUESTS **/
+	const [subscribe] = useMutation(SUBSCRIBE);
+	const [unsubscribe] = useMutation(UNSUBSCRIBE);
 
 	/** LIFECYCLES **/
 	useEffect(() => {
@@ -44,9 +47,37 @@ const MemberPage: NextPage = () => {
 	}, [category, router]);
 
 	/** HANDLERS **/
-	const subscribeHandler = async (id: string, refetch: any, query: any) => {};
+	const subscribeHandler = async (id: string, refetch: any, query: any) => {
+		try {
+			await subscribe({
+				variables: {
+					input: id,
+				},
+			});
+			await sweetMixinSuccessAlert('Followed successfully!');
+			if (refetch) {
+				await refetch({ input: query });
+			}
+		} catch (err: any) {
+			await sweetErrorHandling(err);
+		}
+	};
 
-	const unsubscribeHandler = async (id: string, refetch: any, query: any) => {};
+	const unsubscribeHandler = async (id: string, refetch: any, query: any) => {
+		try {
+			await unsubscribe({
+				variables: {
+					input: id,
+				},
+			});
+			await sweetMixinSuccessAlert('Unfollowed successfully!');
+			if (refetch) {
+				await refetch({ input: query });
+			}
+		} catch (err: any) {
+			await sweetErrorHandling(err);
+		}
+	};
 
 	const redirectToMemberPageHandler = async (memberId: string) => {
 		try {

@@ -5,6 +5,8 @@ import { Pagination, Stack, Typography } from '@mui/material';
 import PropertyCard from '../property/PropertyCard';
 import { Property } from '../../types/property/property';
 import { T } from '../../types/common';
+import { useQuery } from '@apollo/client';
+import { GET_FAVORITES } from '../../../apollo/user/query';
 
 const MyFavorites: NextPage = () => {
 	const device = useDeviceDetect();
@@ -13,10 +15,25 @@ const MyFavorites: NextPage = () => {
 	const [searchFavorites, setSearchFavorites] = useState<T>({ page: 1, limit: 6 });
 
 	/** APOLLO REQUESTS **/
+	const {
+		loading: getFavoritesLoading,
+		data: getFavoritesData,
+		error: getFavoritesError,
+		refetch: getFavoritesRefetch,
+	} = useQuery(GET_FAVORITES, {
+		fetchPolicy: 'network-only',
+		variables: { input: searchFavorites },
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data: T) => {
+			setMyFavorites(data?.getFavorites?.list || []);
+			setTotal(data?.getFavorites?.metaCounter?.total || 0);
+		},
+	});
 
 	/** HANDLERS **/
 	const paginationHandler = (e: T, value: number) => {
 		setSearchFavorites({ ...searchFavorites, page: value });
+		getFavoritesRefetch({ input: { ...searchFavorites, page: value } });
 	};
 
 	if (device === 'mobile') {
