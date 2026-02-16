@@ -1,10 +1,11 @@
 import React from 'react';
 import { Stack, Typography, Box } from '@mui/material';
 import useDeviceDetect from '../../hooks/useDeviceDetect';
+import { LIKE_TARGET_PROPERTY } from '../../../apollo/user/mutation';
+import { useMutation } from '@apollo/client';
 
 const Article = () => {
 	const device = useDeviceDetect();
-
 	if (device === 'mobile') {
 		return <div>PROPERTY CARD</div>;
 	} else {
