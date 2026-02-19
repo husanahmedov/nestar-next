@@ -14,8 +14,12 @@ import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import { MembersInquiry } from '../../../libs/types/member/member.input';
 import { Member } from '../../../libs/types/member/member';
 import { MemberStatus, MemberType } from '../../../libs/enums/member.enum';
-import { sweetErrorHandling } from '../../../libs/sweetAlert';
+import { sweetErrorHandling, sweetMixinSuccessAlert } from '../../../libs/sweetAlert';
 import { MemberUpdate } from '../../../libs/types/member/member.update';
+import { useMutation, useQuery } from '@apollo/client';
+import { GET_ALL_MEMBERS_BY_ADMIN } from '../../../apollo/admin/query';
+import { UPDATE_MEMBER_BY_ADMIN } from '../../../apollo/admin/mutation';
+import { T } from '../../../libs/types/common';
 
 const AdminUsers: NextPage = ({ initialInquiry, ...props }: any) => {
 	const [anchorEl, setAnchorEl] = useState<[] | HTMLElement[]>([]);
@@ -29,9 +33,29 @@ const AdminUsers: NextPage = ({ initialInquiry, ...props }: any) => {
 	const [searchType, setSearchType] = useState('ALL');
 
 	/** APOLLO REQUESTS **/
+	const [updateMemberByAdmin] = useMutation(UPDATE_MEMBER_BY_ADMIN);
+
+	const {
+		loading: getAllMembersLoading,
+		error: getAllMembersError,
+		data: getAllMembersData,
+		refetch: getAllMembersRefetch,
+	} = useQuery(GET_ALL_MEMBERS_BY_ADMIN, {
+		fetchPolicy: 'network-only',
+		variables: {
+			input: membersInquiry,
+		},
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data: T) => {
+			setMembers(data?.getAllMembersByAdmin?.list);
+			setMembersTotal(data?.getAllMembersByAdmin?.metaCounter[0]?.total ?? 0);
+		},
+	});
 
 	/** LIFECYCLES **/
-	useEffect(() => {}, [membersInquiry]);
+	useEffect(() => {
+		getAllMembersRefetch({ input: membersInquiry }).then();
+	}, [membersInquiry]);
 
 	/** HANDLERS **/
 	const changePageHandler = async (event: unknown, newPage: number) => {
@@ -80,8 +104,19 @@ const AdminUsers: NextPage = ({ initialInquiry, ...props }: any) => {
 
 	const updateMemberHandler = async (updateData: MemberUpdate) => {
 		try {
+			console.log('+updateData:', updateData);
+
+			await updateMemberByAdmin({
+				variables: {
+					input: updateData,
+				},
+			});
+
 			menuIconCloseHandler();
+			await getAllMembersRefetch({ input: membersInquiry });
+			await sweetMixinSuccessAlert('Member updated successfully!');
 		} catch (err: any) {
+			menuIconCloseHandler();
 			sweetErrorHandling(err).then();
 		}
 	};
@@ -142,28 +177,28 @@ const AdminUsers: NextPage = ({ initialInquiry, ...props }: any) => {
 						<Box component={'div'}>
 							<List className={'tab-menu'}>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'ALL')}
+									onClick={(e: any) => tabChangeHandler(e, 'ALL')}
 									value="ALL"
 									className={value === 'ALL' ? 'li on' : 'li'}
 								>
 									All
 								</ListItem>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'ACTIVE')}
+									onClick={(e: any) => tabChangeHandler(e, 'ACTIVE')}
 									value="ACTIVE"
 									className={value === 'ACTIVE' ? 'li on' : 'li'}
 								>
 									Active
 								</ListItem>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'BLOCK')}
+									onClick={(e: any) => tabChangeHandler(e, 'BLOCK')}
 									value="BLOCK"
 									className={value === 'BLOCK' ? 'li on' : 'li'}
 								>
 									Blocked
 								</ListItem>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'DELETE')}
+									onClick={(e: any) => tabChangeHandler(e, 'DELETE')}
 									value="DELETE"
 									className={value === 'DELETE' ? 'li on' : 'li'}
 								>

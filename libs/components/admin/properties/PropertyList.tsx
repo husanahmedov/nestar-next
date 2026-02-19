@@ -139,7 +139,7 @@ export const PropertyPanelList = (props: PropertyPanelListType) => {
 					{/*@ts-ignore*/}
 					<EnhancedTableHead />
 					<TableBody>
-						{properties.length === 0 && (
+						{(!properties || properties.length === 0) && (
 							<TableRow>
 								<TableCell align="center" colSpan={8}>
 									<span className={'no-data'}>data not found!</span>
@@ -147,7 +147,8 @@ export const PropertyPanelList = (props: PropertyPanelListType) => {
 							</TableRow>
 						)}
 
-						{properties.length !== 0 &&
+						{properties &&
+							properties.length !== 0 &&
 							properties.map((property: Property, index: number) => {
 								const propertyImage = `${REACT_APP_API_URL}/${property?.propertyImages[0]}`;
 

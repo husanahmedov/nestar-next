@@ -59,7 +59,6 @@ export const UPDATE_PROPERTY_BY_ADMIN = gql`
 			memberId
 			soldAt
 			deletedAt
-			constructedAt
 			createdAt
 			updatedAt
 		}
