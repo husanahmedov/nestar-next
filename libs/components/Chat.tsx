@@ -101,7 +101,7 @@ const Chat = () => {
 					<ScrollableFeed>
 						<Stack className={'chat-main'}>
 							<Box flexDirection={'row'} style={{ display: 'flex' }} sx={{ m: '10px 0px' }} component={'div'}>
-								<div className={'msg-left'}>Welcome to Live chat!</div>
+								<div className={'welcome'}>Welcome to Live chat!</div>
 							</Box>
 							{messagesList}
 							<>
