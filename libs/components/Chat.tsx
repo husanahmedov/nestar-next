@@ -66,22 +66,22 @@ const Chat = () => {
 			console.log('ℹ️ Info update:', data);
 			setOnlineUsers(data.totalClients);
 
-			// Show join/leave notifications
-			if (data.action === 'joined' && data.memberData) {
-				const joinMsg: MessageData = {
-					event: 'system',
-					text: `${data.memberData.memberNick} joined the chat`,
-					memberData: null,
-				};
-				setMessagesList((prev) => [...prev, joinMsg]);
-			} else if (data.action === 'left' && data.memberData) {
-				const leaveMsg: MessageData = {
-					event: 'system',
-					text: `${data.memberData.memberNick} left the chat`,
-					memberData: null,
-				};
-				setMessagesList((prev) => [...prev, leaveMsg]);
-			}
+			// // Show join/leave notifications
+			// if (data.action === 'joined' && data.memberData) {
+			// 	const joinMsg: MessageData = {
+			// 		event: 'system',
+			// 		text: `${data.memberData.memberNick} joined the chat`,
+			// 		memberData: null,
+			// 	};
+			// 	setMessagesList((prev) => [...prev, joinMsg]);
+			// } else if (data.action === 'left' && data.memberData) {
+			// 	const leaveMsg: MessageData = {
+			// 		event: 'system',
+			// 		text: `${data.memberData.memberNick} left the chat`,
+			// 		memberData: null,
+			// 	};
+			// 	setMessagesList((prev) => [...prev, leaveMsg]);
+			// }
 		};
 
 		const handleError = (error: any) => {
