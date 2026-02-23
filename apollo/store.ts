@@ -23,3 +23,15 @@ export const userVar = makeVar<CustomJwtPayload>({
 	memberWarnings: 0,
 	memberBlocks: 0,
 });
+
+interface MessageData {
+	event: string;
+	text: string;
+	memberData: {
+		_id: string;
+		memberNick: string;
+		memberImage?: string;
+	} | null;
+}
+
+export const chatMessagesVar = makeVar<MessageData[]>([]);

@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 import ScrollableFeed from 'react-scrollable-feed';
 import { initializeChatWebSocket, getChatWebSocket, closeChatWebSocket } from '../../apollo/client';
 import { useReactiveVar } from '@apollo/client';
-import { userVar } from '../../apollo/store';
+import { userVar, chatMessagesVar } from '../../apollo/store';
 import { REACT_APP_API_URL } from '../config';
 
 interface MessageData {
@@ -23,7 +23,7 @@ interface MessageData {
 
 const Chat = () => {
 	const chatContentRef = useRef<HTMLDivElement>(null);
-	const [messagesList, setMessagesList] = useState<MessageData[]>([]);
+	const messagesList = useReactiveVar(chatMessagesVar);
 	const [onlineUsers, setOnlineUsers] = useState<number>(0);
 	const textInput = useRef<HTMLInputElement>(null);
 	const [message, setMessage] = useState<string>('');
@@ -59,7 +59,7 @@ const Chat = () => {
 
 		const handleMessage = (data: MessageData) => {
 			console.log('📩 New message:', data);
-			setMessagesList((prev) => [...prev, data]);
+			chatMessagesVar([...chatMessagesVar(), data]);
 		};
 
 		const handleInfo = (data: any) => {
@@ -73,14 +73,14 @@ const Chat = () => {
 			// 		text: `${data.memberData.memberNick} joined the chat`,
 			// 		memberData: null,
 			// 	};
-			// 	setMessagesList((prev) => [...prev, joinMsg]);
+			// 	chatMessagesVar([...chatMessagesVar(), joinMsg]);
 			// } else if (data.action === 'left' && data.memberData) {
 			// 	const leaveMsg: MessageData = {
 			// 		event: 'system',
 			// 		text: `${data.memberData.memberNick} left the chat`,
 			// 		memberData: null,
 			// 	};
-			// 	setMessagesList((prev) => [...prev, leaveMsg]);
+			// 	chatMessagesVar([...chatMessagesVar(), leaveMsg]);
 			// }
 		};
 
